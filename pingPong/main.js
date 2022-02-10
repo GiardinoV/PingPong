@@ -17,6 +17,19 @@
     }
 })();
 
+(function(){
+    self.Ball = function(x, y, radius, board){
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.speed_y = 0;
+        this.speed_x = 3;
+        this.board = board;
+        board.ball = this;
+        this.kind = "circle";
+    }
+})();
+
 (function () {
     self.Bar = function (x, y, width, height, board){
         this.x = x;
@@ -50,49 +63,65 @@
     }
 
     self.BoardView.prototype = {
+        clean: function(){
+            this.ctx.clearRect(0,0,board.width, board.height);
+        },
         draw: function (){
-            // console.log(this.board.elements);
-            for (let i = this.board.elements.length - 1; i >= 0; i--) {
+            for (var i = this.board.elements.length - 1; i >= 0; i--) {
                 var el = this.board.elements[i];
                 draw(this.ctx, el);                
             }
+        },
+        play: function(){
+            board_view.clean();
+            board_view.draw();
         }
     }
 
     function draw(ctx, element){
-        if (element !== null && element.hasOwnProperty("kind")) {
-            switch(element.kind){
+        // if (element !== null && element.hasOwnProperty("kind")) generaba error
+        switch(element.kind){
             case "rectangle":
                 ctx.fillRect(element.x, element.y, element.width, element.height);
                 break;
-            }
-        }
-        
+            case "circle":
+                ctx.beginPath();
+                ctx.arc(element.x, element.y, element.radius, 0, 3.15*2)
+                ctx.fill();   
+                ctx.closePath();
+                break;
+        }        
     }
 })();
 
 var board = new Board(800, 400);
-var bar = new Bar(20, 100, 40, 100, board);
 var bar_2 = new Bar(735, 100, 40, 100, board);
+var bar = new Bar(20, 100, 40, 100, board);
 var canvas = document.getElementById("canvas");
 var board_view = new BoardView(canvas, board);
+var ball = new Ball(400, 200, 10, board);
+
+//setInterval(main, 1000); ES INEFICIENTE
+window.requestAnimationFrame(controller);
 
 document.addEventListener("keydown",function(ev){
-    console.log(ev.keycode);
-    if(ev.keycode == 38){
+    ev.preventDefault();
+    if(ev.keycode === 38){
         bar.up();
     }
-    else if(ev.keycode == 40){
+    else if(ev.keycode === 40){
         bar.down();
-    }else if(ev.keycode == 87){
+    }else if(ev.keycode === 87){
         bar_2.up();
-    }else if(ev.keycode == 83){
+    }else if(ev.keycode === 83){
         bar_2.down();
     }
 });
 
-self.addEventListener("load", main);
 
-function main(){
-    board_view.draw();
+window.addEventListener("load", controller);
+
+function controller(){
+    board_view.play();
+    window.requestAnimationFrame(controller);
 }
